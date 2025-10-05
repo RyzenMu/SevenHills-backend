@@ -1,11 +1,19 @@
 import express from "express";
 import bodyParser from "body-parser";
 import { supabase } from "./supabaseClient";
+import cors from "cors";
 
 
 
 const app = express();
 app.use(bodyParser.json());
+
+// Enable CORS
+app.use(cors({
+  origin: ["https://ryzenmu.github.io"],  // allow your frontend domain
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 // 🔹 1. Register User (Sign Up)
 app.post("/register", async (req, res) => {
