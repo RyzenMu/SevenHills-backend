@@ -92,14 +92,14 @@ app.post("/logout", async (req, res) => {
 // ➕ Create new tweet
 app.post("/tweets", async (req, res) => {
   try {
-    const { tweet, media_url } = req.body;
-    if (!tweet) return res.status(400).json({ error: "Tweet text is required" });
+    const { text, media_url } = req.body;
+    if (!text) return res.status(400).json({ error: "Tweet text is required" });
 
     const result = await pool.query(
-      `INSERT INTO sevenhills_tweets (tweet, media_url)
+      `INSERT INTO sevenhills_tweets (text, media_url)
        VALUES ($1, $2)
        RETURNING *;`,
-      [tweet, media_url]
+      [text, media_url]
     );
 
     res.status(201).json({ tweet: result.rows[0] });
