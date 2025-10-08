@@ -149,10 +149,12 @@ app.delete("/tweets/:id", async (req, res) => {
 });
 
 
+const PORT = process.env.PORT || 4000;
 
 
 
 // Start server
-app.listen(4000, () => {
-  console.log("Auth backend running on http://localhost:4000");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
+
