@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import { supabase } from "./supabaseClient";
 import cors from "cors";
+import pkg from 'pg';
 
 
 
@@ -14,6 +15,12 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+//Neon DB connection
+const {Pool} = pkg;
+const pool = new Pool({
+  connectionString: process.env.NEON_DB_STRING || "postgresql://neondb_owner:npg_j6z9qAIJNWpM@ep-falling-shadow-a1vl0r93-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+});
 
 // 🔹 1. Register User (Sign Up)
 app.post("/register", async (req, res) => {
@@ -77,6 +84,70 @@ app.post("/logout", async (req, res) => {
   if (error) return res.status(400).json({ error: error.message });
   res.json({ message: "Logged out" });
 });
+
+// ===========================================
+// 🔹 TWEETS ENDPOINTS
+// ===========================================
+
+// ➕ Create new tweet
+app.post("/tweets", async (req, res) => {
+  try {
+    const { tweet, media_url } = req.body;
+    if (!tweet) return res.status(400).json({ error: "Tweet text is required" });
+
+    const result = await pool.query(
+      `INSERT INTO sevenhills_tweets (tweet, media_url)
+       VALUES ($1, $2)
+       RETURNING *;`,
+      [tweet, media_url]
+    );
+
+    res.status(201).json({ tweet: result.rows[0] });
+  } catch (err) {
+    console.error("Error inserting tweet:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// 🟡 Get all tweets
+app.get("/tweets", async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT * FROM sevenhills_tweets ORDER BY id DESC;`);
+    res.json({ tweets: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch tweets" });
+  }
+});
+
+// 🟢 Toggle completed
+app.put("/tweets/:id/complete", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `UPDATE sevenhills_tweets
+       SET completed = NOT completed,
+           completed_time = CASE WHEN completed = FALSE THEN NOW() ELSE NULL END
+       WHERE id = $1
+       RETURNING *;`,
+      [id]
+    );
+    res.json({ tweet: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update tweet" });
+  }
+});
+
+// 🔴 Soft delete
+app.delete("/tweets/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query(`UPDATE sevenhills_tweets SET deleted = TRUE WHERE id = $1;`, [id]);
+    res.json({ message: "Tweet deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete tweet" });
+  }
+});
+
 
 
 
