@@ -11,7 +11,9 @@ app.use(bodyParser.json());
 
 // Enable CORS
 app.use(cors({
-  origin: ["https://ryzenmu.github.io"],  // allow your frontend domain
+  origin: ["https://ryzenmu.github.io",
+    "http://localhost:5173"
+  ],  // allow your frontend domain
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -108,6 +110,11 @@ app.post("/tweets", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
+// create a new tweet for Android
+app.post("tweets-android", async (req, res) => {
+  
+})
 
 // 🟡 Get all tweets
 app.get("/tweets", async (req, res) => {
